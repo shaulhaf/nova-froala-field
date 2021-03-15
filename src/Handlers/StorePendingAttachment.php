@@ -39,6 +39,18 @@ class StorePendingAttachment
     {
         $this->abortIfFileNameExists($request);
 
+        // if (config('filesystems.disks.' . $this->field->disk . '.visibility') == 'public') {
+        //     $attachment = PendingAttachment::create([
+        //         'draft_id' => $request->draftId,
+        //         'attachment' => config('nova.froala-field.preserve_file_names')
+        //             ? $request->attachment->storePubliclyAs(
+        //                 $this->field->getStorageDir(),
+        //                 $request->attachment->getClientOriginalName(),
+        //                 $this->field->disk
+        //             ) : $request->attachment->storePublicly($this->field->getStorageDir(), $this->field->disk),
+        //         'disk' => $this->field->disk,
+        //     ])->attachment;
+        // } else {
         $attachment = PendingAttachment::create([
             'draft_id' => $request->draftId,
             'attachment' => config('nova.froala-field.preserve_file_names')
@@ -49,6 +61,7 @@ class StorePendingAttachment
                 ) : $request->attachment->store($this->field->getStorageDir(), $this->field->disk),
             'disk' => $this->field->disk,
         ])->attachment;
+        // }
 
         $this->imageOptimize($attachment);
 
@@ -57,11 +70,12 @@ class StorePendingAttachment
 
     protected function abortIfFileNameExists(Request $request): void
     {
-        $path = rtrim($this->field->getStorageDir(), '/').'/'.$request->attachment->getClientOriginalName();
+        $path = rtrim($this->field->getStorageDir(), '/') . '/' . $request->attachment->getClientOriginalName();
 
-        if (config('nova.froala-field.preserve_file_names')
+        if (
+            config('nova.froala-field.preserve_file_names')
             && Storage::disk($this->field->disk)
-                ->exists($path)
+            ->exists($path)
         ) {
             abort(response()->json([
                 'status' => Response::HTTP_CONFLICT,
